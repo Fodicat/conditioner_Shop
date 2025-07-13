@@ -33,12 +33,12 @@ import PricelistRoutes from './pricelistRoutes.js';
 import BlogpostsRoutes from './blogpostsRoutes.js';
 import orderRoutes from './OrderRoutes.js';
 
-app.use('/api', UserRoutes);
-app.use('/api', ProductRoutes);
-app.use('/api', NotificationsRoutes);
-app.use('/api', PricelistRoutes);
+//app.use('/api', UserRoutes);
+//app.use('/api', ProductRoutes);
+//app.use('/api', NotificationsRoutes);
+//app.use('/api', PricelistRoutes);
 app.use('/api', BlogpostsRoutes);
-app.use('/api', orderRoutes);
+//app.use('/api', orderRoutes);
 
 // === Разделяем режимы работы: Разработка vs Продакшен ===
 if (NODE_ENV === 'production') {

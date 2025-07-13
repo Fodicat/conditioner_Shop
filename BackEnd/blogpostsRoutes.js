@@ -17,64 +17,63 @@ const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } }); // 5M
 const router = express.Router();
 
 // ✅ **Получение всех постов блога**
-router.get('/blog-posts', (req, res) => {
-  db.query('SELECT * FROM blog_posts ORDER BY createdAt DESC', (err, results) => {
-    if (err) {
-      console.error('Error fetching blog posts:', err);
-      return res.status(500).json({ error: 'Error fetching blog posts' });
-    }
-    res.json(results);
-  });
+router.get('/blog-posts', async (req, res) => {
+  try {
+    const [posts] = await db.execute('SELECT * FROM blog_posts ORDER BY createdAt DESC');
+    res.status(200).json(posts);
+  } catch (error) {
+    console.error('Ошибка при получении постов блога:', error);
+    res.status(500).json({ error: 'Ошибка при получении постов блога' });
+  }
 });
 
 // ✅ **Удаление поста блога**
-router.delete('/blog-posts/:id', (req, res) => {
-  const postId = req.params.id;
-  db.query('DELETE FROM blog_posts WHERE id = ?', [postId], (err, result) => {
-    if (err) {
-      console.error('Error deleting post:', err);
-      return res.status(500).json({ error: 'Error deleting post' });
-    }
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'Post not found' });
-    }
-    res.json({ message: 'Post deleted successfully' });
-  });
+router.delete('/blog-posts/:id', async (req, res) => {
+  try {
+    const postId = req.params.id;
+    let query = 'DELETE FROM blog_posts WHERE id = ?'
+    let params = [postId]
+    const [status] = await db.execute(query, params)
+    res.status(200).json({status})
+  } catch (error) {
+    res.status(500).json({ error: 'Ошибка удаления поста'})
+  }
 });
 
 // ✅ **Создание нового поста блога**
-router.post('/blog-posts', upload.single('image'), (req, res) => {
-  const { title, content } = req.body;
-  const image = req.file; // Получаем изображение, загруженное через FormData
+router.post('/blog-posts', upload.single('image'), async (req, res) => {
+  try {
+    const { title, content } = req.body;
+    const file = req.file;
+    const author = 'Admin'; // можно будет брать из авторизации
 
-  if (image) {
-    const imagePath = `/uploads/${image.filename}`; // Путь к изображению
+    if (!title?.trim() || !content?.trim()) {
+      return res.status(400).json({ error: 'Title and content are required.' });
+    }
 
-    // Добавляем пост в базу данных с изображением
-    db.query(
-      'INSERT INTO blog_posts (title, content, author, image) VALUES (?, ?, ?, ?)',
-      [title, content, 'Admin', imagePath],
-      (err, result) => {
-        if (err) {
-          console.error('Error adding blog post:', err);
-          return res.status(500).json({ error: 'Error adding blog post' });
-        }
-        res.status(201).json({ id: result.insertId, message: 'Blog post added successfully' });
-      }
-    );
-  } else {
-    // Если изображения нет, добавляем пост без изображения
-    db.query(
-      'INSERT INTO blog_posts (title, content, author) VALUES (?, ?, ?)',
-      [title, content, 'Admin'],
-      (err, result) => {
-        if (err) {
-          console.error('Error adding blog post:', err);
-          return res.status(500).json({ error: 'Error adding blog post' });
-        }
-        res.status(201).json({ id: result.insertId, message: 'Blog post added successfully' });
-      }
-    );
+    let query = '';
+    let params = [];
+
+    if (file) {
+      const imagePath = `/uploads/${file.filename}`;
+      query = 'INSERT INTO blog_posts (title, content, author, image) VALUES (?, ?, ?, ?)';
+      params = [title, content, author, imagePath];
+    } else {
+      query = 'INSERT INTO blog_posts (title, content, author) VALUES (?, ?, ?)';
+      params = [title, content, author];
+    }
+
+    const [result] = await db.execute(query, params);
+
+    return res.status(201).json({
+      id: result.insertId,
+      message: 'Blog post created successfully.',
+      ...(file && { image: `/uploads/${file.filename}` })
+    });
+
+  } catch (error) {
+    console.error('Ошибка при добавлении поста:', error);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
