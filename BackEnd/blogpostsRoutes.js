@@ -16,7 +16,7 @@ const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } }); // 5M
 
 const router = express.Router();
 
-// ✅ **Получение всех постов блога**
+// ✅ **Получение всех постов блога** - Обновление завершено
 router.get('/blog-posts', async (req, res) => {
   try {
     const [posts] = await db.execute('SELECT * FROM blog_posts ORDER BY createdAt DESC');
@@ -27,7 +27,7 @@ router.get('/blog-posts', async (req, res) => {
   }
 });
 
-// ✅ **Удаление поста блога**
+// ✅ **Удаление поста блога** - Обновление завершено
 router.delete('/blog-posts/:id', async (req, res) => {
   try {
     const postId = req.params.id;
@@ -40,7 +40,7 @@ router.delete('/blog-posts/:id', async (req, res) => {
   }
 });
 
-// ✅ **Создание нового поста блога**
+// ✅ **Создание нового поста блога** - Обновление завершено
 router.post('/blog-posts', upload.single('image'), async (req, res) => {
   try {
     const { title, content } = req.body;
