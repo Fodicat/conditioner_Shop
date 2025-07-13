@@ -36,7 +36,7 @@ import orderRoutes from './OrderRoutes.js';
 //app.use('/api', UserRoutes);
 //app.use('/api', ProductRoutes);
 app.use('/api', NotificationsRoutes);
-//app.use('/api', PricelistRoutes);
+app.use('/api', PricelistRoutes);
 app.use('/api', BlogpostsRoutes);
 app.use('/api', orderRoutes);
 
