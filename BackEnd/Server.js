@@ -38,7 +38,7 @@ import orderRoutes from './OrderRoutes.js';
 app.use('/api', NotificationsRoutes);
 //app.use('/api', PricelistRoutes);
 app.use('/api', BlogpostsRoutes);
-//app.use('/api', orderRoutes);
+app.use('/api', orderRoutes);
 
 // === Разделяем режимы работы: Разработка vs Продакшен ===
 if (NODE_ENV === 'production') {

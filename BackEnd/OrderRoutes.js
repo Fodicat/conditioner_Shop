@@ -3,126 +3,141 @@ import db from './db.js';
 
 const router = express.Router();
 
-// ✅ **Создание нового заказа**
+async function getOrderItems(orderId) {
+  const [items] = await db.execute(
+    'SELECT * FROM order_items WHERE order_id = ?',
+    [orderId]
+  );
+  return items;
+}
+
+// ✅ Создание нового заказа - Обновление завершено
 router.post('/orders', async (req, res) => {
   try {
-    const { 
-      user_id, 
-      total_price, 
-      status, 
-      items, 
-      shipping_address, 
-      contact_phone, 
-      comments 
+    const {
+      user_id,
+      total_price,
+      status = 'processing',
+      items = [],
+      shipping_address,
+      contact_phone,
+      comments
     } = req.body;
 
-    // Insert the order into the orders table
-    const [orderResult] = await db.promise().query(
-      'INSERT INTO orders (user_id, total_price, status, shipping_address, contact_phone, comments, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())',
+    if (!user_id || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ message: 'Missing required fields or items is empty' });
+    }
+
+    const [orderResult] = await db.execute(
+      `INSERT INTO orders 
+       (user_id, total_price, status, shipping_address, contact_phone, comments, created_at) 
+       VALUES (?, ?, ?, ?, ?, ?, NOW())`,
       [user_id, total_price, status, shipping_address, contact_phone, comments]
     );
 
     const orderId = orderResult.insertId;
 
-    // Insert each order item
-    for (const item of items) {
-      await db.promise().query(
-        'INSERT INTO order_items (order_id, product_id, quantity, price, name) VALUES (?, ?, ?, ?, ?)',
+    const itemInsertPromises = items.map(item =>
+      db.execute(
+        `INSERT INTO order_items 
+         (order_id, product_id, quantity, price, name) 
+         VALUES (?, ?, ?, ?, ?)`,
         [orderId, item.product_id, item.quantity, item.price, item.name]
-      );
-    }
+      )
+    );
+
+    await Promise.all(itemInsertPromises);
 
     res.status(201).json({ message: 'Order created successfully', orderId });
   } catch (error) {
-    console.error('Error creating order:', error);
+    console.error('❌ Error creating order:', error);
     res.status(500).json({ message: 'Failed to create order', error: error.message });
   }
 });
 
-// ✅ **Получение заказов для конкретного пользователя**
+// ✅ Получение заказов пользователя - Обновление завершено
 router.get('/orders/user/:userId', async (req, res) => {
   try {
-    const userId = req.params.userId;
+    const { userId } = req.params;
 
-    // Get all orders for this user
-    const [orders] = await db.promise().query(
+    const [orders] = await db.execute(
       'SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC',
       [userId]
     );
 
-    // For each order, get its items
-    for (let i = 0; i < orders.length; i++) {
-      const [items] = await db.promise().query(
-        'SELECT * FROM order_items WHERE order_id = ?',
-        [orders[i].id]
-      );
-      orders[i].items = items;
-    }
+    const enrichedOrders = await Promise.all(
+      orders.map(async (order) => {
+        const items = await getOrderItems(order.id);
+        return { ...order, items };
+      })
+    );
 
-    res.json(orders);
+    res.json(enrichedOrders);
   } catch (error) {
-    console.error('Error fetching orders:', error);
+    console.error('❌ Error fetching user orders:', error);
     res.status(500).json({ message: 'Failed to fetch orders', error: error.message });
   }
 });
 
-// ✅ **Получение всех заказов (для администратора)**
+// ✅ Получение всех заказов (админ) - Обновление завершено
 router.get('/orders/all', async (req, res) => {
   try {
-    // Get all orders sorted by most recent first
-    const [orders] = await db.promise().query(
-      'SELECT o.*, u.name as userName FROM orders o LEFT JOIN users u ON o.user_id = u.id ORDER BY o.created_at DESC'
+    const [orders] = await db.execute(
+      `SELECT o.*, u.name AS userName 
+       FROM orders o 
+       LEFT JOIN users u ON o.user_id = u.id 
+       ORDER BY o.created_at DESC`
     );
 
-    // For each order, get its items
-    for (let i = 0; i < orders.length; i++) {
-      const [items] = await db.promise().query(
-        'SELECT * FROM order_items WHERE order_id = ?',
-        [orders[i].id]
-      );
-      orders[i].items = items;
-    }
+    const enrichedOrders = await Promise.all(
+      orders.map(async (order) => {
+        const items = await getOrderItems(order.id);
+        return { ...order, items };
+      })
+    );
 
-    res.json(orders);
+    res.json(enrichedOrders);
   } catch (error) {
-    console.error('Error fetching all orders:', error);
+    console.error('❌ Error fetching all orders:', error);
     res.status(500).json({ message: 'Failed to fetch all orders', error: error.message });
   }
 });
 
-// ✅ **Обновление статуса заказа (для администратора)**
+// ✅ Обновление статуса заказа - Обновление завершено
 router.put('/orders/:orderId/status', async (req, res) => {
   try {
     const { orderId } = req.params;
     const { status } = req.body;
-    
-    // Validate status
+
     const validStatuses = ['processing', 'shipped', 'delivered', 'cancelled', 'completed'];
     if (!validStatuses.includes(status)) {
-      return res.status(400).json({ message: 'Invalid status. Must be one of: processing, shipped, delivered, cancelled, completed' });
+      return res.status(400).json({
+        message: `Invalid status: must be one of [${validStatuses.join(', ')}]`
+      });
     }
 
-    // Update the order status
-    const result = await db.promise().query(
+    const [result] = await db.execute(
       'UPDATE orders SET status = ? WHERE id = ?',
       [status, orderId]
     );
-    
-    if (result[0].affectedRows === 0) {
+
+    if (result.affectedRows === 0) {
       return res.status(404).json({ message: `Order with ID ${orderId} not found` });
     }
 
     res.json({ message: 'Order status updated successfully' });
   } catch (error) {
-    console.error('Error updating order status:', error);
+    console.error('❌ Error updating order status:', error);
     res.status(500).json({ message: 'Failed to update order status', error: error.message });
   }
 });
 
-console.log('Маршруты в OrderRoutes:');
-router.stack.forEach(m => {
+// 🔍 Вывод всех маршрутов в лог
+console.log('\n📦 OrderRoutes registered:');
+router.stack.forEach((m) => {
   if (m.route) {
-    console.log(Object.keys(m.route.methods).join(', ').toUpperCase(), m.route.path);
+    const methods = Object.keys(m.route.methods).map(m => m.toUpperCase()).join(', ');
+    console.log(`${methods.padEnd(10)} ${m.route.path}`);
   }
 });
 
