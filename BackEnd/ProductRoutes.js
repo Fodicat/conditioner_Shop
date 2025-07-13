@@ -6,7 +6,7 @@ import db from './db.js';
 
 const router = express.Router();
 
-// Конфигурация загрузки изображений
+// Конфигурация загрузки изображений - Обновление завершено
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const uploadsDir = path.join(__dirname, 'uploads');
@@ -17,7 +17,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } }); // до 5MB
 
-// ✅ Добавление нового продукта
+// ✅ Добавление нового продукта - Обновление завершено
 router.post('/products', upload.array("image", 3), async (req, res) => {
   const { name, description, fullDescription, price, category, specs } = req.body;
   const files = req.files;
@@ -48,7 +48,7 @@ router.post('/products', upload.array("image", 3), async (req, res) => {
   }
 });
 
-// ✅ Обновление продукта
+// ✅ Обновление продукта - Обновление завершено
 router.put('/products/:id', async (req, res) => {
   const { id } = req.params;
   const { name, description, fullDescription, price, discount, category, specs } = req.body;
@@ -76,7 +76,7 @@ router.put('/products/:id', async (req, res) => {
   }
 });
 
-// ✅ Обновление изображения по индексу
+// ✅ Обновление изображения по индексу - Обновление завершено
 router.put('/products/:id/image', upload.single("image"), async (req, res) => {
   const productId = req.params.id;
   const index = parseInt(req.body.index);
@@ -105,7 +105,7 @@ router.put('/products/:id/image', upload.single("image"), async (req, res) => {
   }
 });
 
-// ✅ Получение всех продуктов
+// ✅ Получение всех продуктов - Обновление завершено
 router.get('/products', async (req, res) => {
   try {
     const [results] = await db.execute("SELECT * FROM products");
@@ -116,7 +116,7 @@ router.get('/products', async (req, res) => {
   }
 });
 
-// ✅ Получение продукта по ID
+// ✅ Получение продукта по ID - Обновление завершено
 router.get('/products/:id', async (req, res) => {
   const { id } = req.params;
   try {
@@ -139,7 +139,7 @@ router.get('/products/:id', async (req, res) => {
   }
 });
 
-// ✅ Удаление продукта
+// ✅ Удаление продукта - Обновление завершено
 router.delete('/products/:id', async (req, res) => {
   const { id } = req.params;
   try {
@@ -153,7 +153,7 @@ router.delete('/products/:id', async (req, res) => {
   }
 });
 
-// ✅ Массовое обновление скидок
+// ✅ Массовое обновление скидок - Обновление завершено
 router.put('/update-discounts', async (req, res) => {
   const { products } = req.body;
 
