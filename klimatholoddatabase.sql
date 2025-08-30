@@ -18,10 +18,10 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- База данных: `klimatholoddatabase`
+-- База данных: `mydb`
 --
-CREATE DATABASE IF NOT EXISTS `klimatholoddatabase` DEFAULT CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci;
-USE `klimatholoddatabase`;
+CREATE DATABASE IF NOT EXISTS `mydb` DEFAULT CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci;
+USE `mydb`;
 
 -- --------------------------------------------------------
 
@@ -131,7 +131,7 @@ CREATE TABLE `products` (
 
 CREATE TABLE `users` (
   `name` text NOT NULL,
-  `Password` text NOT NULL,
+  `password` text NOT NULL,
   `email` text NOT NULL,
   `is_verified` int(11) NOT NULL,
   `isAdmin` int(11) NOT NULL,

@@ -23,13 +23,13 @@ router.post('/login', async (req, res) => {
     if (results.length === 0) {
       return res.status(401).json({ error: 'Неверный email или пароль.' });
     }
-
+    console.log(results[0]);
     const user = results[0];
 
     if (!user.is_verified) {
       return res.status(403).json({ error: 'Аккаунт не подтвержден. Проверьте вашу почту.' });
     }
-
+    console.log(user.password);
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({ error: 'Неверный email или пароль.' });

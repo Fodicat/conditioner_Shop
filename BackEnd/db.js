@@ -2,10 +2,10 @@ import mysql from 'mysql2/promise'
 
 // Create a connection pool instead of a single connection for better performance
 const db = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: 'root',
-    database: 'klimatholoddatabase',
+    host: process.env.DB_HOST || 'db',   // имя сервиса MariaDB
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || 'rootpass',
+    database: process.env.DB_NAME || 'klimatholoddatabase',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
